@@ -120,6 +120,15 @@
         <dl class="message-properties">
 			<dt>Template Folder <span class="property-type">text</span></dt>
 			<dd>Property to set the folder to read the templates from. Default to .templates.</dd>
+			<dl class="message-properties">
+			<dd>Create a directory called helperFunctions under this folder and handlebar will load each .json file under this dir as helper functions that can be used within a template.</dd>
+			<dd>Functions in the file should use the following as a template. <b>NB:</b>Make sure there is a space after the keyword function
+			<pre>{
+        "name":"{name to use in template}",
+        "func":"function (valueIn){ return valueIn;}"
+}</pre>
+			</dd>
+			</dl>
 		</dl>
         <dl class="message-properties">
 			<dt>Template Name <span class="property-type">text</span></dt>

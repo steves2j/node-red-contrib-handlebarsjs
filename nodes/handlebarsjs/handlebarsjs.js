@@ -43,6 +43,34 @@ class handlebarsjsNode {
 
     log("Inited");
 
+    let reviver = (key, value) => {  
+  	if (typeof value === 'string' 
+      		&& value.indexOf('function ') === 0) {    
+    		let functionTemplate = `(${value})`;    
+    		return eval(functionTemplate);  
+  	}  
+  	return value;
+    }
+
+    try {
+    let hfDir=this.templateLocation+"/helperFunctions";
+    fs.readdir(hfDir, function(err,files){
+        files.forEach(file=>{
+            let cmdName=file.substr(0,file.lastIndexOf("."));
+            let templet=fs.readFileSync(hfDir+"/"+file,"utf8");
+		log(templet);
+	    let obj=JSON.parse(templet,reviver);
+            handlebars.registerHelper(obj.name,obj.func);
+        });
+    });
+    
+    } catch (err){
+        console.log(err);
+        console.log("No helperFunctions dir or functions to load");
+    }
+	 // handlebars.registerHelper("fixed2",function(floatin){return floatin.toFixed(2);});
+    log("Done loading helpers");
+
     if (this.query) {
         log("Query was specified");
         try {
