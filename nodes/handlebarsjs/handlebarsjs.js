@@ -8,6 +8,7 @@ const handlebars = require('handlebars');
  * using one property as the source
  * and another property as the result.
  */
+let cache=[];
 class handlebarsjsNode {
 
   /** Constructor */
@@ -16,7 +17,7 @@ class handlebarsjsNode {
 
     //-- initialize component properties
   }
-  
+
   /**
    * Initialize the node red node
    * @param {object} RED - Node Red framework
@@ -39,22 +40,23 @@ class handlebarsjsNode {
     this.nocache = nodeRedNode.nocache;
     this.query = nodeRedNode.query;
     this.compiledQuery = null;
-    this.cache={};
+    cache={};
 
     log("Inited");
 
-    let reviver = (key, value) => {  
-  	if (typeof value === 'string' 
-      		&& value.indexOf('function ') === 0) {    
-    		let functionTemplate = `(${value})`;    
-    		return eval(functionTemplate);  
-  	}  
+    let reviver = (key, value) => {
+  	if (typeof value === 'string'
+      		&& value.indexOf('function ') === 0) {
+    		let functionTemplate = `(${value})`;
+    		return eval(functionTemplate);
+  	}
   	return value;
     }
 
     try {
     let hfDir=this.templateLocation+"/helperFunctions";
     fs.readdir(hfDir, function(err,files){
+      if (!files) return;
         files.forEach(file=>{
             let cmdName=file.substr(0,file.lastIndexOf("."));
             let templet=fs.readFileSync(hfDir+"/"+file,"utf8");
@@ -63,7 +65,7 @@ class handlebarsjsNode {
             handlebars.registerHelper(obj.name,obj.func);
         });
     });
-    
+
     } catch (err){
         console.log(err);
         console.log("No helperFunctions dir or functions to load");
@@ -83,14 +85,14 @@ class handlebarsjsNode {
           nodeRedNode.status({fill:'red', shape:'ring',text:'Error compiling handlebars query'});
         }
     }
-    
+
     /**
      * handle inputs provided within the node red flow
      */
     nodeRedNode.on('input', (msg) => {
       let results;
       let source = {};
-      
+
       log("input called");
 
       try {
@@ -108,7 +110,7 @@ class handlebarsjsNode {
                 tName=msg.templatename;
                 log("Template Name :"+tName);
             }
-            let cpQuery=this.cache[tName];
+            let cpQuery=cache[tName];
             log(cpQuery);
             if (!cpQuery || this.nocache==true) {
                 log("notfound :"+this.templateLocation+"/"+tName);
@@ -121,7 +123,7 @@ class handlebarsjsNode {
                     log("File found :");
                     log(templet);
                     cpQuery = handlebars.compile(templet);
-                    if (this.nocache==false) this.cache[tName] = cpQuery;
+                    if (this.nocache==false) cache[tName] = cpQuery;
                 }
             }
             if (cpQuery) {
@@ -153,9 +155,9 @@ class handlebarsjsNode {
    * Determines the value from a string path on an object.
    * For example, given an object:
    * `{ payload: { person: { name: 'john', age: 24 } } }`
-   * 
+   *
    * A path of `payload.person.name` would give the value: 'john'
-   * 
+   *
    * @param {object} obj - object that the path's variables should travers
    * @param {string} path - path of the field on an object to resolve - or a blank path provides the object
    * @returns {string} - the value of the path in the object
@@ -169,13 +171,13 @@ class handlebarsjsNode {
 
   /**
    * Assigns a value at a given path within an object.
-   * 
+   *
    * For example, given an object:
    * `{ payload: { person: { name: 'john', age: 24 } } }`
-   * 
+   *
    * A path of `payload.person.name` with the value of 'jane' would give:
    * `{ payload: { person: { name: 'john', age: 24 } } }`
-   * 
+   *
    * @param {object} obj - the object to navigate within.
    * @param {string} path - path from within the object (or null for the obj)
    * @param {any} val - the value to set at that path
@@ -193,6 +195,16 @@ class handlebarsjsNode {
  * @param {NodeRed} RED - Node Red framework instance
  */
 function setupNodeRed(RED){
+  RED.nodes.registerType('hbclearcache', function(config){
+          RED.nodes.createNode(this, config);
+          this.name = 'clearcache';
+          nodeRedNode=this;
+          this.on('input', (msg) => {
+                  cache={};
+                  console.log("clear cache");
+                  nodeRedNode.send(msg);
+          });
+  });
   RED.nodes.registerType('handlebarsjs', function(config){
     RED.nodes.createNode(this, config);
 
@@ -204,10 +216,10 @@ function setupNodeRed(RED){
     this.templateLocation = config.templateLocation;
     this.templateName = config.tname;
     this.nocache = config.nocache;
-    
+
     log(config);
-    
-    
+
+
 
     this.info = new handlebarsjsNode()
       .initialize(RED, config, this);

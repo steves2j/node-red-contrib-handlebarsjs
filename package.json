@@ -44,5 +44,5 @@
     "test": "node node_modules/mocha/bin/mocha --config .mocharc.json \"test/**/*_spec.js\" --exit",
     "test:watch": "npm run test -- --watch"
   },
-  "version": "0.0.2"
+  "version": "0.0.3"
 }

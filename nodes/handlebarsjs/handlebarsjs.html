@@ -1,4 +1,56 @@
 <script type="text/javascript">
+  RED.nodes.registerType('hbclearcache',{
+          category: 'function',
+          color: '#C0DEED',
+          defaults: {
+                  name: {value:""}
+          },
+          inputs:1,
+          outputs:1,
+          icon:"template.png",
+          label: function(){
+                  return this.name||"hbclearcache";
+          },
+          oneditprepare: function(){
+                      console.log('oneditprepare');
+                      this.editor = RED.editor.createEditor({
+                              id: 'node-input-query-editor',
+                              mode: 'ace/mode/html',
+                              value: $("#node-input-query").val()
+                      });
+                      RED.library.create({
+                                      url:"functions", // where to get the data from
+                                      type:"function", // the type of object the library is for
+                                      editor:that.editor, // the field name the main text body goes to
+                                      fields:['name','outputs']
+                      });
+                      this.editor.focus();
+              },
+              oneditsave: function(){
+                      console.log('oneditsave');
+                      $("#node-input-query").val(this.editor.getValue());
+                      console.log(`node-input-query: ${$('#node-input-query').val()}`);
+                      this.editor.destroy();
+                      delete this.editor;
+              },
+              oneditcancel: function(){
+                      console.log('oneditcancel');
+                      this.editor.destroy();
+                      delete this.editor;
+              },
+              oneditresize: function(size){
+                      console.log('oneditresize');
+                      var rows = $("#dialog-form>div:not(.node-text-editor-row)");
+                      var height = $("#dialog-form").height();
+                      for (var i=0; i<rows.size(); i++) {
+                                      height -= $(rows[i]).outerHeight(true);
+                      }
+                      var editorRow = $("#dialog-form>div.node-text-editor-row");
+                      height -= (parseInt(editorRow.css("marginTop"))+parseInt(editorRow.css("marginBottom")));
+                      $(".node-text-editor").css("height",height+"px");
+                      this.editor.resize();
+              }
+              });
     RED.nodes.registerType('handlebarsjs',{
         category: 'function',
         color: '#C0DEED',
@@ -74,17 +126,17 @@
         <label for="node-input-targetProperty"><i class="icon-tag"></i> Target Property</label>
         <input type="text" id="node-input-targetProperty" placeholder="">
     </div>
-    
+
     <div class="form-row">
 		<label for="node-input-templateLocation"><i class="icon-tag"></i> Template Folder</label>
 		<input type="text" id="node-input-templateLocation" placeholder="">
 	</div>
-    
+
     <div class="form-row">
 		<label for="node-input-tname"><i class="icon-tag"></i> Template Name</label>
 		<input type="text" id="node-input-tname" placeholder="">
 	</div>
-    
+
     <div class="form-row">
 		<label for="node-input-nocache"><i class="icon-tag"></i> No Cache</label>
 		<input type="checkbox" id="node-input-nocache" placeholder="">
@@ -96,10 +148,23 @@
 	</div>
 
 	<div class="form-row node-text-editor-row">
-		<div style="height: 250px; min-height:150px;" 
-			class="node-text-editor" 
+		<div style="height: 250px; min-height:150px;"
+			class="node-text-editor"
 			id="node-input-query-editor" ></div>
 	</div>
+</script>
+
+<script type="text/x-red" data-template-name="hbclearcache">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="hbclearcache">
+        <div>
+          <p>Programically allows a msg to clear the handlerbarjs template cache.
+        </div>
 </script>
 
 <script type="text/x-red" data-help-name="handlebarsjs">
